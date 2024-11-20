@@ -1,0 +1,43 @@
+1.
+MATCH (a:Aluno)-[:TEM_HISTORICO]->(h:Historico_Aluno)
+RETURN a.id AS IDAluno, 
+       a.nome AS NomeAluno, 
+       COLLECT({
+           disciplina: h.disc_nome, 
+           semestre: h.semestre, 
+           ano: h.ano, 
+           nota: h.nota
+       }) AS Historico
+ORDER BY NomeAluno
+
+
+2.
+MATCH (p:Professor)-[:TEM_HISTORICO]->(h:Historico_Professor)
+OPTIONAL MATCH (h)-[:CHEFE_DE]->(d:Departamento)
+RETURN p.id AS IDProfessor, 
+       p.nome AS NomeProfessor, 
+       COLLECT({disciplina: h.disc_nome, semestre: h.semestre, ano: h.ano, departamento: d.nome}) AS Historico
+ORDER BY NomeProfessor
+
+3.
+MATCH (af:AlunoFormado)
+RETURN af.id AS IDAluno, 
+       af.nome AS NomeAluno
+ORDER BY NomeAluno
+
+4.
+MATCH (p:Professor)-[:CHEFE_DE]->(d:Departamento)
+RETURN p.id AS IDProfessor, 
+       p.nome AS NomeProfessor, 
+       d.nome AS NomeDepartamento
+ORDER BY NomeProfessor
+
+5.
+MATCH (a:Aluno)-[:PARTICIPOU_DE]->(t:TCC)-[:ORIENTADO_POR]->(p:Professor)
+RETURN a.id AS IDAluno, 
+       a.nome AS NomeAluno, 
+       t.id AS IDTCC, 
+       t.nome AS NomeTCC, 
+       p.id AS IDProfessor, 
+       p.nome AS NomeProfessor
+ORDER BY NomeAluno, NomeTCC
