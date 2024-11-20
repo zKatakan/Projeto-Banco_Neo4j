@@ -1,33 +1,33 @@
 from faker import Faker
 import random
 
-faker = Faker("pt_BR")  # Nomes brasileiros
+faker = Faker("pt_BR")  
 
-# Configurações
-anoinicio1 = 2015  # Ano mínimo para histórico
+
+anoinicio1 = 2015  
 anofinal1 = 2019
 anoinicio2 = 2020
-anofinal2 = 2024  # Ano máximo para histórico
+anofinal2 = 2024 
 
-qtalunos = 50  # Quantidade de alunos
-qtprof = 6  # Quantidade de professores
-integrantestcc = 2  # Quantidade de integrantes por TCC
+qtalunos = 50 
+qtprof = 6  
+integrantestcc = 2  
 
-# IDs gerados para entidades
+
 def montarID(qtIds, qtDigitos):
     return random.sample(range(10**(qtDigitos - 1), 10**qtDigitos), qtIds)
 
-aluno_id = montarID(qtalunos, 8)  # IDs dos alunos
-prof_id = montarID(qtprof, 7)  # IDs dos professores
+aluno_id = montarID(qtalunos, 8) 
+prof_id = montarID(qtprof, 7)  
 
-curso_nomes = ["Ciência da Computação", "Engenharia Civil", "Administração"]  # Cursos
-curso_id = montarID(len(curso_nomes), 6)  # IDs dos cursos
+curso_nomes = ["Ciência da Computação", "Engenharia Civil", "Administração"]  
+curso_id = montarID(len(curso_nomes), 6) 
 
-tcc_nomes = ["Super Leonardo Bros.", "Prédio Z", "Reino-ministração"]  # TCCs
-tcc_id = montarID(len(tcc_nomes), 5)  # IDs dos TCCs
+tcc_nomes = ["Super Leonardo Bros.", "Prédio Z", "Reino-ministração"]  
+tcc_id = montarID(len(tcc_nomes), 5) 
 
-dept_nomes = ["Exatas", "Ciências", "Humanas"]  # Departamentos
-dept_id = montarID(len(dept_nomes), 4)  # IDs dos departamentos
+dept_nomes = ["Exatas", "Ciências", "Humanas"] 
+dept_id = montarID(len(dept_nomes), 4) 
 
 disc_nomes = [
     "Cálculo",
@@ -37,9 +37,9 @@ disc_nomes = [
     "Materiais de Engenharia",
     "Introdução à Administração",
 ]
-disc_id = montarID(len(disc_nomes), 3)  # IDs das disciplinas
+disc_id = montarID(len(disc_nomes), 3)  
 
-# Estruturas de dados
+
 curso_disc = {
     "Ciência da Computação": ["Cálculo", "Engenharia de Software"],
     "Engenharia Civil": ["Cálculo 2", "Materiais de Engenharia"],
@@ -52,13 +52,13 @@ dept_cursos = {
     "Humanas": ["Administração"],
 }
 
-# Classes e estrutura para Neo4j
+
 class Aluno:
     def __init__(self, aluno_id, curso_id):
         self.aluno_id = aluno_id
         self.nome = faker.unique.name()
         self.curso_id = curso_id
-        self.historico = []  # Lista de objetos HistoricoAluno
+        self.historico = [] 
 
     def adicionar_historico(self, historico):
         self.historico.append(historico)
@@ -76,7 +76,7 @@ class Professor:
         self.prof_id = prof_id
         self.nome = faker.unique.name()
         self.dept_id = dept_id
-        self.historico = []  # Lista de objetos HistoricoProfessor
+        self.historico = []  
 
     def adicionar_historico(self, historico):
         self.historico.append(historico)
@@ -84,7 +84,7 @@ class Professor:
     def gerar_query(self):
         queries = []
         queries.append(f"CREATE (:Professor {{id: '{self.prof_id}', nome: '{self.nome}'}});")
-        if self.prof_id == self.dept_id:  # Professor é chefe de departamento
+        if self.prof_id == self.dept_id: 
             queries.append(f"MATCH (p:Professor {{id: '{self.prof_id}'}}), (d:Departamento {{id: '{self.dept_id}'}}) CREATE (p)-[:CHEFE_DE]->(d);")
         for hist in self.historico:
             queries.append(hist.gerar_query())
@@ -95,7 +95,7 @@ class Aula:
         self.disc_id = disc_id
         self.semestre = semestre
         self.ano = ano
-        self.nota = nota  # Para alunos
+        self.nota = nota 
 
 class TCC:
     def __init__(self, tcc_id, tcc_nome, prof_id, integrantes, curso_id):
@@ -157,9 +157,7 @@ class Departamento:
 
     def gerar_query(self):
         queries = []
-        # Criar o nó do departamento
         queries.append(f"CREATE (:Departamento {{id: '{self.dept_id}', nome: '{self.nome}'}});")
-        # Relacionar o professor como chefe do departamento
         queries.append(f"MATCH (d:Departamento {{id: '{self.dept_id}'}}), (p:Professor {{id: '{self.chefe_id}'}}) CREATE (p)-[:CHEFE_DE]->(d);")
         return "\n".join(queries)
 
@@ -171,7 +169,7 @@ class HistoricoAluno:
         self.semestre = semestre
         self.ano = ano
         self.nota = nota
-        self.tcc_id = tcc_id  # ID do grupo de TCC, se existir
+        self.tcc_id = tcc_id
 
     def gerar_query(self):
         base_query = f"""
@@ -195,17 +193,15 @@ class HistoricoAluno:
     
 departamentos = []
 for i, nome in enumerate(curso_nomes):
-    chefe_id = random.choice(prof_id)  # Seleciona um professor aleatoriamente como chefe
+    chefe_id = random.choice(prof_id) 
     departamentos.append(Departamento(dept_id[i], nome, chefe_id))
 
-# Geração de dados
 alunos = [Aluno(aluno_id[i], curso_id[i % len(curso_id)]) for i in range(qtalunos)]
 professores = [Professor(prof_id[i], dept_id[i % len(dept_id)]) for i in range(qtprof)]
 aulas = [Aula(disc_id[i], random.randint(1, 2), random.randint(anoinicio1, anofinal2), random.uniform(5.0, 10.0)) for i in range(len(disc_id))]
 
-# Associar histórico escolar aos alunos
 for aluno in alunos:
-    for _ in range(2):  # Duas disciplinas por aluno
+    for _ in range(2): 
         aula = random.choice(aulas)
         aluno.adicionar_historico(
             HistoricoAluno(
@@ -218,9 +214,8 @@ for aluno in alunos:
             )
         )
 
-# Associar disciplinas ministradas aos professores
 for professor in professores:
-    for _ in range(2):  # Duas disciplinas por professor
+    for _ in range(2): 
         aula = random.choice(aulas)
         professor.adicionar_historico(
             HistoricoProfessor(
@@ -232,19 +227,19 @@ for professor in professores:
             )
         )
 
-# Gerar TCCs
+
 tccs = []
 for i in range(len(tcc_nomes)):
     integrantes = random.sample([aluno.aluno_id for aluno in alunos if aluno.curso_id == curso_id[i]], integrantestcc)
     tccs.append(TCC(tcc_id[i], tcc_nomes[i], prof_id[i], integrantes, curso_id[i]))
 
 alunos_formados = []
-num_formados = random.randint(10, 20)  # Quantidade aleatória de formados
+num_formados = random.randint(10, 20) 
 for _ in range(num_formados):
     aluno = random.choice(alunos)
     alunos_formados.append(AlunoFormado(aluno.aluno_id, aluno.nome))
 
-# Gerar arquivo Cypher
+
 with open("dados_neo4j.cql", "w", encoding="utf-8") as arquivo:
     for aluno in alunos:
         arquivo.write(aluno.gerar_query() + "\n")
